@@ -56,15 +56,31 @@ feature 'restaurants' do
     end
 
     context 'editing restaurants' do
-      before { Restaurant.create name: 'KFC' }
+      context 'the restaurant was created by user' do
+        before { manually_create_restaurant }
 
-      scenario 'let a user edit a restaurant' do
-        visit '/restaurants'
-        click_link 'Edit KFC'
-        fill_in 'Name', with: 'Kentucky Fried Chicken'
-        click_button 'Update Restaurant'
-        expect(page).to have_content 'Kentucky Fried Chicken'
-        expect(current_path).to eq '/restaurants'
+        scenario 'let a user edit a restaurant' do
+          visit '/restaurants'
+          click_link 'Edit KFC'
+          fill_in 'Name', with: 'Kentucky Fried Chicken'
+          click_button 'Update Restaurant'
+          expect(page).to have_content 'Kentucky Fried Chicken'
+          expect(current_path).to eq '/restaurants'
+        end
+      end
+
+      context 'the restaurant was created by someone else' do
+        before { Restaurant.create name: 'KFC' }
+
+        scenario 'the user cannot edit restaurant' do
+          visit '/restaurants'
+          click_link 'Edit KFC'
+          fill_in 'Name', with: 'Kentucky Fried Chicken'
+          click_button 'Update Restaurant'
+          expect(page).to have_content 'KFC'
+          expect(current_path).to eq '/restaurants'
+          expect(page).to have_content 'Only owners can edit'
+        end
       end
     end
 
@@ -87,7 +103,7 @@ feature 'restaurants' do
           visit '/restaurants'
           click_link 'Delete KFC'
           expect(page).to have_content 'KFC'
-          expect(page).to have_content 'some sort of error'
+          expect(page).to have_content 'Only owners can delete'
         end
       end
     end
