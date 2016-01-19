@@ -33,20 +33,12 @@ feature 'restaurants' do
 
   context 'while user is logged in' do
     before do
-      visit('/')
-      click_link('Sign up')
-      fill_in('Email', with: 'test@example.com')
-      fill_in('Password', with: 'testtest')
-      fill_in('Password confirmation', with: 'testtest')
-      click_button('Sign up')
+      sign_up_for_account
     end
 
     context 'creating restaurants' do
       scenario 'prompts user to fill out a form then displays new restaurant' do
-        visit '/restaurants'
-        click_link 'Add a restaurant'
-        fill_in 'Name', with: 'KFC'
-        click_button 'Create Restaurant'
+        manually_create_restaurant
         expect(page).to have_content 'KFC'
         expect(current_path).to eq '/restaurants'
       end
@@ -77,13 +69,26 @@ feature 'restaurants' do
     end
 
     context 'deleting restaurants' do
-      before { Restaurant.create name: 'KFC' }
+      context 'the restaurant was created by user' do
+        before { manually_create_restaurant }
 
-      scenario 'removes a restaurant when a user clicks a delete link' do
-        visit '/restaurants'
-        click_link 'Delete KFC'
-        expect(page).not_to have_content 'KFC'
-        expect(page).to have_content 'Restaurant successfully deleted'
+        scenario 'removes a restaurant when a user clicks a delete link' do
+          visit '/restaurants'
+          click_link 'Delete KFC'
+          expect(page).not_to have_content 'KFC'
+          expect(page).to have_content 'Restaurant successfully deleted'
+        end
+      end
+
+      context 'the restaurant was created by someone else' do
+        before { Restaurant.create name: 'KFC' }
+
+        scenario 'raises and error when user tries to delete restaurant' do
+          visit '/restaurants'
+          click_link 'Delete KFC'
+          expect(page).to have_content 'KFC'
+          expect(page).to have_content 'some sort of error'
+        end
       end
     end
   end
